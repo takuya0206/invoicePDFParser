@@ -8,22 +8,24 @@ const dir = './docs';
 const parseClassMethodInvoice = async (fileNameList) => {
   const result = {};
   for (let i = 0; i < fileNameList.length; i++) {
-    const filePath = path.join(dir, fileNameList[i]);
-    const dataBuffer = fs.readFileSync(filePath);
-    await pdf(dataBuffer).then((data) => {
-      const textData = data.text;
-      const invoiceAmount = /(ご請求金額\s)(.*?)(\s円)/.exec(textData)[2].replace(/,/g, '');
-      const projectName = /(プロジェクト名：)(.*?)\s.([0-9]*年[0-9]*月)./.exec(textData)[2];
-      const projectDate = /(プロジェクト名：)(.*?)\s.([0-9]*年[0-9]*月)./.exec(textData)[3];
-      const invoiceTitle = `${projectDate}_${projectName}.pdf`;
-      result[fileNameList[i]] = {
-        fileName : fileNameList[i],
-        invoiceAmount,
-        projectName,
-        projectDate,
-        invoiceTitle
-      }
-    })
+    if (/\.pdf/.test(fileNameList[i])) { // .DS_Storeなどが入り込むのを防ぐ
+      const filePath = path.join(dir, fileNameList[i]);
+      const dataBuffer = fs.readFileSync(filePath);
+      await pdf(dataBuffer).then((data) => {
+        const textData = data.text;
+        const invoiceAmount = /(ご請求金額\s)(.*?)(\s円)/.exec(textData)[2].replace(/,/g, '');
+        const projectName = /(プロジェクト名：)(.*?)\s.([0-9]*年[0-9]*月)./.exec(textData)[2];
+        const projectDate = /(プロジェクト名：)(.*?)\s.([0-9]*年[0-9]*月)./.exec(textData)[3];
+        const invoiceTitle = `${projectDate}_${projectName}.pdf`;
+        result[fileNameList[i]] = {
+          fileName : fileNameList[i],
+          invoiceAmount,
+          projectName,
+          projectDate,
+          invoiceTitle
+        }
+      })
+    }
   }
   return result;
 }
@@ -66,4 +68,4 @@ const handleClassMethodInvoice = async () => {
 }
 
 
-handleClassMethodInvoice(dir);
+handleClassMethodInvoice();
