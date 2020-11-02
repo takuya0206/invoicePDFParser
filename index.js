@@ -13,10 +13,17 @@ const parseClassMethodInvoice = async (fileNameList) => {
       const dataBuffer = fs.readFileSync(filePath);
       await pdf(dataBuffer).then((data) => {
         const textData = data.text;
+
         const invoiceAmount = /(ご請求金額\s)(.*?)(\s円)/.exec(textData)[2].replace(/,/g, '');
-        const projectName = /(プロジェクト名：)(.*?)\s.([0-9]*年[0-9]*月)./.exec(textData)[2];
-        const projectDate = /(プロジェクト名：)(.*?)\s.([0-9]*年[0-9]*月)./.exec(textData)[3];
-        const invoiceTitle = `${projectDate}_${projectName}.pdf`;
+        let projectName = '';
+        let projectDate = '';
+
+        if (/(プロジェクト名：)(.*?)\s.([0-9]*年[0-9]*月)./.exec(textData)) {
+          projectName = /(プロジェクト名：)(.*?)\s.([0-9]*年[0-9]*月)./.exec(textData)[2];
+          projectDate = /(プロジェクト名：)(.*?)\s.([0-9]*年[0-9]*月)./.exec(textData)[3];
+        }
+        const invoiceTitle = projectName !== '' ? `${projectDate}_${projectName}.pdf` : fileNameList[i]; //想定外の請求書の場合はファイル名をそのまま使用する
+
         result[fileNameList[i]] = {
           fileName : fileNameList[i],
           invoiceAmount,
