@@ -12,17 +12,13 @@ const parseClassMethodInvoice = async (fileNameList) => {
       const filePath = path.join(dir, fileNameList[i]);
       const dataBuffer = fs.readFileSync(filePath);
       await pdf(dataBuffer).then((data) => {
-        const textData = data.text;
+        const textData = data.text.replace(/\n/g, '');
 
-        const invoiceAmount = /(ご請求金額\s)(.*?)(\s円)/.exec(textData)[2].replace(/,/g, '');
-        let projectName = '';
-        let projectDate = '';
+        const invoiceAmount = /(合計\\.*?\\.*?\\)(.*?)(品目)/.exec(textData) ? /(合計\\.*?\\.*?\\)(.*?)(品目)/.exec(textData)[2].replace(/,/g, '') : 0;
+        const projectName = /(プロジェクト名：)(.*?)(）)./.exec(textData) ? /(プロジェクト名：)(.*?)(）)./.exec(textData)[2] : null;
+        const projectDate = /(件名)(.*?)(クラスメソッド)/.exec(textData) ? /(件名)(.*?)(クラスメソッド)/.exec(textData)[2] : null;
 
-        if (/(プロジェクト名：)(.*?)\s.([0-9]*年[0-9]*月)./.exec(textData)) {
-          projectName = /(プロジェクト名：)(.*?)\s.([0-9]*年[0-9]*月)./.exec(textData)[2];
-          projectDate = /(プロジェクト名：)(.*?)\s.([0-9]*年[0-9]*月)./.exec(textData)[3];
-        }
-        const invoiceTitle = projectName !== '' ? `${projectDate}_${projectName}.pdf` : fileNameList[i]; //想定外の請求書の場合はファイル名をそのまま使用する
+        const invoiceTitle = projectName ? `${projectDate}_${projectName}.pdf` : fileNameList[i]; //想定外の請求書の場合はファイル名をそのまま使用する
 
         result[fileNameList[i]] = {
           fileName : fileNameList[i],
